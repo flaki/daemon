@@ -1,0 +1,36 @@
+{
+  "name": "@flaki/daemon",
+  "version": "1.0.0",
+  "description": "Multi-environment deployment daemon for static sites",
+  "main": "daemon.js",
+  "bin": "daemon.js",
+  "type": "module",
+  "scripts": {
+    "release": "standard-version"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/flaki/daemon.git"
+  },
+  "keywords": [
+    "static",
+    "daemon",
+    "deploy",
+    "live",
+    "preview",
+    "production",
+    "ssg"
+  ],
+  "author": "Flaki <git@flaki.hu>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/flaki/daemon/issues"
+  },
+  "homepage": "https://github.com/flaki/daemon#readme",
+  "dependencies": {
+    "node-static": "^0.7.11"
+  },
+  "devDependencies": {
+    "standard-version": "^9.3.1"
+  }
+}
