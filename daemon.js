@@ -25,7 +25,9 @@ if (configFile?.endsWith('.conf')) {
 
   try {
     const configs = readFileSync(configFile).toString()
-    const fileConfigs = configs.split('\n').map(c => c.match(/^(\w+)=(.*)/) ?? [])
+    const fileConfigs = configs.split('\n')
+      .filter(ln => ln.startsWith('#') === false)
+      .map(c => c.match(/^(\w+)=(.*)/) ?? [])
 
     for (const [,k,v] of fileConfigs) {
       if (k) {

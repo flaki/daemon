@@ -37,6 +37,8 @@ Key        | Value
 `BUILDCMD` | The command to execute after a successful pull, defaults to `npm run build`. The output directory and environment name are exposed to the build script as the env vars `OUTPUT_DIR` & `BUILD_ENV`
 `LOGSDIR`  | Enable logging incoming webhook payloads in the given folder, ideal for debugging and feature development (default: no logging)
 
+Lines starting with a `#` character are ignored.
+
 Note that all configuration file parameters can also be passed as regular ENV vars. If you need to launch Dǣmon without a configfile, you may specify a dash instead: `daemon -`. Please further note that environmental variable values take precedence and will override the config entries.
 
 
