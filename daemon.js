@@ -72,6 +72,7 @@ if (WORKDIR) {
 
 // Build/deploy-related defaults
 const OUTDIR = process.env.OUTDIR ?? '_deploy'
+const PREBUILDCMD = process.env.PREBUILDCMD ?? 'npm ci'
 const BUILDCMD = process.env.BUILDCMD ?? 'npm run build'
 const BUILDFILES = process.env.BUILDFILES
 
@@ -322,7 +323,7 @@ async function updateEnv(envName = 'preview') {
     // and simply blow away the local repo if it cannot be fast-forwarded &
     // re-fetch the origin version
     // Install dependencies
-    `npm ci`,
+    PREBUILDCMD,
     // Run build/deploy
     `OUTPUT_DIR="${buildTarget}" BUILD_ENV="${envName}" ${BUILDCMD}`,
   ]
