@@ -35,6 +35,7 @@ Key        | Value
 `ENVS`     | The branches Dǣmon should handle, comma separated list of `branchname:port` values, where `port` is the port number where the generated site for this branch will be served from
 `OUTDIR`   | Defaults to `$WORKDIR/_deploy/`. Dǣmon passes this and the branch in the environment variable `OUTPUT_DIR` to the build command, e.g.: `OUTPUT_DIR=$WORKDIR/_deploy/mybranch npm run build`
 `BUILDCMD` | The command to execute after a successful pull, defaults to `npm run build`. The output directory and environment name are exposed to the build script as the env vars `OUTPUT_DIR` & `BUILD_ENV`
+`BUILDFILES`| When it's not possible/convenient to set the build process to output into a given directory, use `BUILDFILES` to specify where the artifacts end up and Dǣmon will copy them to the deployment location
 `LOGSDIR`  | Enable logging incoming webhook payloads in the given folder, ideal for debugging and feature development (default: no logging)
 
 Lines starting with a `#` character are ignored.

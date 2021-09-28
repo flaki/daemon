@@ -3,9 +3,10 @@
 import { exec } from 'child_process'
 import { createServer } from 'http'
 import { createHmac } from 'crypto'
-import { readFileSync, writeFileSync, mkdirSync } from 'fs'
+import { readFileSync, writeFileSync, mkdirSync, rmSync } from 'fs'
 import { cwd } from 'process'
 import { join as joinPath, resolve as resolvePath } from 'path'
+import copyFiles from 'recursive-copy'
 
 import * as Static from 'node-static'
 
@@ -72,6 +73,7 @@ if (WORKDIR) {
 // Build/deploy-related defaults
 const OUTDIR = process.env.OUTDIR ?? '_deploy'
 const BUILDCMD = process.env.BUILDCMD ?? 'npm run build'
+const BUILDFILES = process.env.BUILDFILES
 
 // Log incoming webhook bodies to the given folder (default: no logging)
 const LOGSDIR = process.env.LOGSDIR
@@ -278,6 +280,9 @@ async function updateEnv(envName = 'preview') {
     return console.error(`Tried to update non-existent env "${envName}"!`, envName)
   }
 
+  // Path to the build target
+  const buildTarget = joinPath(OUTDIR, envName)
+
   // On force push we delete the local branch and re-pull from origin
   //let cleanCommand = `git reset --hard && git clean -fxd .`
   let cleanCommand = `git clean -fxd . && git restore .`
@@ -300,7 +305,7 @@ async function updateEnv(envName = 'preview') {
     // Install dependencies
     `npm ci`,
     // Run build/deploy
-    `OUTPUT_DIR="${OUTDIR}/${envName}" BUILD_ENV="${envName}" ${BUILDCMD}`,
+    `OUTPUT_DIR="${buildTarget}" BUILD_ENV="${envName}" ${BUILDCMD}`,
   ]
 
   // Measure build time
@@ -330,6 +335,17 @@ async function updateEnv(envName = 'preview') {
       execResult?.stdout.trim().split('\n').forEach(ln => debug('| '+ln))
     }
 
+    // Copy the build result if we need to
+    // TODO: maybe always build to tmpdir and not yank the existing files
+    // until we are finished, then delete & replace the old one on success?
+    if (BUILDFILES) {
+      const buildSource = BUILDFILES
+      debug(`Copying build artifacts: ${buildSource}`)
+      rmSync(buildTarget, { force: true, recursive: true })
+      const { length: copied } = await copyFiles(buildSource, buildTarget)
+      debug(`→ ${buildTarget} - ${copied} files copied`)
+    }
+    
     // Update the service
     await setupEnv(env)
   }
