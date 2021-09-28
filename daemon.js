@@ -142,7 +142,7 @@ async function handler(req, res) {
   }
 
   // Store headers in payload for further debugging
-  payload._headers = Array.from(req.headers)
+  payload._headers = Object.assign({}, req.headers)
 
   // Make sure the hook is intended for this handler
   if (REPO && payload.repository?.full_name !== REPO) {
