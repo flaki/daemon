@@ -141,6 +141,9 @@ async function handler(req, res) {
     return console.log('Error processing payload: JSON expected')
   }
 
+  // Store headers in payload for further debugging
+  payload._headers = Array.from(req.headers)
+
   // Make sure the hook is intended for this handler
   if (REPO && payload.repository?.full_name !== REPO) {
     return debug(`Not processed: untracked repository "${payload.repository?.full_name}"`)
@@ -148,26 +151,42 @@ async function handler(req, res) {
 
   // Extract more information
   const { ref, pusher, repository: { pushed_at: pushedAt }} = payload
-  const pushedEnv = ref.split('/').pop()
+  const pushedEnv = ref?.split('/').pop()
 
-  debug(`${pusher.name} <${pusher.email}> pushed new commits to: ${pushedEnv} @ ${REPO}`)
+  if (pushedEnv) {
+    debug(`${pusher.name} <${pusher.email}> pushed new commits to: ${pushedEnv} @ ${REPO}`)
 
-  // Ensure we are supposed to handle this branch/environment
-  const pushEnv = ENVS.find(env => env.name == pushedEnv)
-  if (!pushEnv) {
-    return debug(`Not processed: untracked environment "${pushedEnv}"`)
+    // Ensure we are supposed to handle this branch/environment
+    const pushEnv = ENVS.find(env => env.name == pushedEnv)
+
+    if (!pushEnv) {
+      return debug(`Untracked environment "${pushedEnv}"`)
+    }
+
+  } else {
+    debug(`Could not determine pushed env.`)
   }
-
-  // Store the last payload
-  pushEnv._last = payload
 
   // Log the payload JSON for later debugging
   if (LOGSDIR) {
-    const fileName = payload.repository.pushed_at +'-'+ pushedEnv +'-'+ payload._hmac +'.json'
+    const payloadTime = payload.repository.pushed_at ?? Date.now()
+    const payloadEnv = pushedEnv ?? 'unknown'
+    const payloadHmac = payload._hmac ?? 'unknown'
+
+    const fileName = `${payloadTime}-${payloadEnv}-${payloadHmac}.json`
+
     writeFileSync(joinPath(LOGSDIR, fileName), JSON.stringify(payload, null, 2))  
   }
 
+  // No further processing needed
+  if (!pushEnv) {
+    debug('Not updated.')
+    return
+  }
+
   // Pull & reload matching repository
+  pushEnv._last = payload
+
   await updateEnv(pushEnv.name)
 }
 
