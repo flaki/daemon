@@ -290,7 +290,7 @@ async function updateEnv(envName = 'preview') {
   try {
     // Run the commands to update the workspace
     const execResult = await new Promise((resolve, reject) => {
-      exec(command.join(' && '), { timeout: 5000, maxBuffer: 1024 * 32 },
+      exec(command.join(' && '), {},
         function (err, stdout, stderr) {
           if (err) {
             console.log(stdout)
