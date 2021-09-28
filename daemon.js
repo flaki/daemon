@@ -14,11 +14,13 @@ import * as Static from 'node-static'
 const debug = process.env.DEBUG ? console.log.bind(console, '[DEBUG] ') : () => {}
 const VERBOSE = (process.env.DEBUG === 'verbose')
 
+console.log('Starting Dǣmon...')
+
 // If a config file is specified, read it and merge it with process.env values
 // Note that env values take precedence (config values do not override existing values in the env)
 const configFile = process.argv[process.argv.length-1]
 if (configFile?.endsWith('.conf')) {
-  debug('Reading config from: ', configFile)
+  console.log('Reading configuration from: ', configFile)
 
   try {
     const configs = readFileSync(configFile).toString()
@@ -287,6 +289,9 @@ async function updateEnv(envName = 'preview') {
     `OUTPUT_DIR="${OUTDIR}/${envName}" BUILD_ENV="${envName}" ${BUILDCMD}`,
   ]
 
+  // Measure build time
+  const timing = Date.now()
+
   try {
     // Run the commands to update the workspace
     const execResult = await new Promise((resolve, reject) => {
@@ -303,6 +308,7 @@ async function updateEnv(envName = 'preview') {
     })
 
     // Show command output
+    debug(`Completed in: ${((Date.now()-timing)/1000).toFixed(1)}s`)
     if (VERBOSE) {
       command.forEach(cmd => debug( '$> '+cmd ))
 
