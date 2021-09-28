@@ -19,6 +19,7 @@ console.log('Starting Dǣmon...')
 // If a config file is specified, read it and merge it with process.env values
 // Note that env values take precedence (config values do not override existing values in the env)
 const configFile = process.argv[process.argv.length-1]
+let configLoaded = false
 if (configFile?.endsWith('.conf')) {
   console.log('Reading configuration from: ', configFile)
 
@@ -34,14 +35,23 @@ if (configFile?.endsWith('.conf')) {
         }
       }
     }
+
+    configLoaded = true
   }
   catch (e) {
     debug(`Couldn't load config file '${configFile}':`, e)
   }
 }
 
+// Double-check for a loaded configuration
+if (!configLoaded && configFile !== '-') {
+  console.log(`Usage: daemon (<filename>.conf|-)`)
+  console.error(`Please specify a configuration file, or '-' if you would like Dǣmon to use ENV vars for configuration.`)
+  process.exit(1)
+}
+
 // Various configuration options
-const PORT = process.env.PORT ?? 9999
+const PORT = process.env.PORT || 9999
 const HMAC_KEY = process.env.HMAC_KEY
 
 if (!HMAC_KEY) {
@@ -71,12 +81,14 @@ if (LOGSDIR) {
 
 // Designate a repo and environments (branches) to operate on
 const REPO = process.env.REPO
-const ENVS = process.env.ENVS?.split(',')
+// TODO: move this into a proper helper
+const ENVS = (process.env.ENVS?.split(',') ?? [])
   .map(env => env.split(':'))
-  .map(([name,port]) => ({ name: name.trim(), port: parseInt(port, 10) })) ?? []
+  .map(([name,port]) => (name && port ? { name: name.trim(), port: parseInt(port, 10) } : undefined))
+  .filter(r => !!r)
 
 debug('Repository: ', REPO)
-debug('Envs: ', ENVS.map(e => `${e.name} (:${e.port})`).join(', '))
+debug('Envs: ', ENVS.map(e => `${e.name} (:${e.port})`).join(', ') || '<none>')
 
 
 
@@ -326,7 +338,11 @@ async function updateEnv(envName = 'preview') {
 
 // Launch services for the local environments
 (async () => {
-  debug('Initializing environments...')
+  if (!ENVS.length) {
+    return console.log(`No environments defined!`)
+  }
+
+  console.log(`Initializing ${ENVS.length} environments...`)
 
   // Note: this has to run sequentially because the git commands in the same repository
   // will interfere with each other if ran concurrently

@@ -15,7 +15,7 @@ Dǣmon requires `node.js` and `npm`. There is no need to install anything, just 
 
 Make sure that Dǣmon has write permissions for the working directory and all other configured paths.
 
-Use `npx @flaki/daemon@next` for pre-release versions.
+Use `npx @flaki/daemon@next` for pre-release versions. You can also `npm install -g @flaki/daemon[@next]` and use daemon globally: `daemon <configfile.conf>`
 
 Note: Dǣmon currently uses shell operations, and thus only works on Linux systems. It has been tested on Debian/Ubuntu 20.04 with bash and all necessary packages installed (git, nodejs, npm etc.).
 
@@ -36,6 +36,8 @@ Key        | Value
 `OUTDIR`   | Defaults to `$WORKDIR/_deploy/`. Dǣmon passes this and the branch in the environment variable `OUTPUT_DIR` to the build command, e.g.: `OUTPUT_DIR=$WORKDIR/_deploy/mybranch npm run build`
 `BUILDCMD` | The command to execute after a successful pull, defaults to `npm run build`. The output directory and environment name are exposed to the build script as the env vars `OUTPUT_DIR` & `BUILD_ENV`
 `LOGSDIR`  | Enable logging incoming webhook payloads in the given folder, ideal for debugging and feature development (default: no logging)
+
+Note that all configuration file parameters can also be passed as regular ENV vars. If you need to launch Dǣmon without a configfile, you may specify a dash instead: `daemon -`. Please further note that environmental variable values take precedence and will override the config entries.
 
 
 ### Development
