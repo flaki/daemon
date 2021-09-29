@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.1.3](https://github.com/flaki/daemon/compare/v1.1.2...v1.1.3) (2021-09-29)
+
+
+### Bug Fixes
+
+* pushEnv scoping bug ([34c8fae](https://github.com/flaki/daemon/commit/34c8faeea3e3c569cc887de464c99ea74a5addd1))
+
 ### [1.1.2](https://github.com/flaki/daemon/compare/v1.1.1...v1.1.2) (2021-09-29)
 
 
