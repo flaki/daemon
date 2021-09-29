@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.1.2](https://github.com/flaki/daemon/compare/v1.1.1...v1.1.2) (2021-09-29)
+
+
+### Bug Fixes
+
+* embedding env values in the BUILDCMD ([fba1b4e](https://github.com/flaki/daemon/commit/fba1b4e6c39b8740e1f63af5335f2e4db6583114))
+* fixed missing headers in log ([6e3299b](https://github.com/flaki/daemon/commit/6e3299b3b7476d5c32df4baafd086b6be6edcc0a))
+* make the pre-build command configurable ([face26c](https://github.com/flaki/daemon/commit/face26c8650e0bf0dea90e6c690057fba7c92225))
+
 ### [1.1.1](https://github.com/flaki/daemon/compare/v1.1.0...v1.1.1) (2021-09-28)
 
 
