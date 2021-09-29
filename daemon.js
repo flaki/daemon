@@ -279,7 +279,7 @@ async function setupEnv(env) {
     // Note: this should always be true but it gets us a block scope so why not make it explicit
     if (!env._static) {
       const envPath = resolvePath(WORKDIR, OUTDIR, env.name)
-      const fileServer = new Static.Server(envPath)
+      const fileServer = new Static.Server(envPath, { defaultExtension: "html" })
 
       env._static = (req, res) => fileServer.serve(req, res)
       env._server.on('request', env._static)
@@ -300,6 +300,8 @@ async function updateEnv(envName = 'preview') {
   if (!env) {
     return console.error(`Tried to update non-existent env "${envName}"!`, envName)
   }
+
+  debug(`Updating: ${envName}`)
 
   // Path to the build target
   const buildTarget = joinPath(OUTDIR, envName)
