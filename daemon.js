@@ -153,12 +153,13 @@ async function handler(req, res) {
   // Extract more information
   const { ref, pusher, repository: { pushed_at: pushedAt }} = payload
   const pushedEnv = ref?.split('/').pop()
+  let pushEnv
 
   if (pushedEnv) {
     debug(`${pusher.name} <${pusher.email}> pushed new commits to: ${pushedEnv} @ ${REPO}`)
 
     // Ensure we are supposed to handle this branch/environment
-    const pushEnv = ENVS.find(env => env.name == pushedEnv)
+    pushEnv = ENVS.find(env => env.name == pushedEnv)
 
     if (!pushEnv) {
       return debug(`Untracked environment "${pushedEnv}"`)
