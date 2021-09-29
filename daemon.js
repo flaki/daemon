@@ -311,6 +311,12 @@ async function updateEnv(envName = 'preview') {
     cleanCommand = `git checkout ${main} && git branch -D ${envName}`
     debug('Force push detected')
   }
+
+  // Allow embedding env-specific parameters in BUILDCMD
+  const buildCommand = BUILDCMD
+    .replace(/%env%/g, envName)
+    .replace(/%outdir%/g, buildTarget)
+
   const command = [
     // Switch to working dir
     `cd "${WORKDIR}"`,
@@ -325,7 +331,7 @@ async function updateEnv(envName = 'preview') {
     // Install dependencies
     PREBUILDCMD,
     // Run build/deploy
-    `OUTPUT_DIR="${buildTarget}" BUILD_ENV="${envName}" ${BUILDCMD}`,
+    `OUTPUT_DIR="${buildTarget}" BUILD_ENV="${envName}" ${buildCommand}`,
   ]
 
   // Measure build time
