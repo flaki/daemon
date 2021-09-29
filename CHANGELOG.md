@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.2.0](https://github.com/flaki/daemon/compare/v1.1.4...v1.2.0) (2021-09-29)
+
+
+### Features
+
+* html file fallback for "nice URLs" ([a93c77a](https://github.com/flaki/daemon/commit/a93c77a8e8fa8592bb507e328cd3651588215aff))
+
 ### [1.1.4](https://github.com/flaki/daemon/compare/v1.1.3...v1.1.4) (2021-09-29)
 
 

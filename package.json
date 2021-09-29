@@ -1,6 +1,6 @@
 {
   "name": "@flaki/daemon",
-  "version": "1.1.4",
+  "version": "1.2.0",
   "description": "Multi-environment deployment daemon for static sites",
   "main": "daemon.js",
   "bin": "daemon.js",
