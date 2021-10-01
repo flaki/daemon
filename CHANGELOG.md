@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.2.1](https://github.com/flaki/daemon/compare/v1.2.0...v1.2.1) (2021-10-01)
+
+
+### Bug Fixes
+
+* branch checkouts ([d0a33ca](https://github.com/flaki/daemon/commit/d0a33ca9929b02ae3f4297dbd762e377e7083d6d))
+
 ## [1.2.0](https://github.com/flaki/daemon/compare/v1.1.4...v1.2.0) (2021-09-29)
 
 
