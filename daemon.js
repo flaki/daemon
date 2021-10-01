@@ -326,7 +326,7 @@ async function updateEnv(envName = 'preview') {
     // Clean the repo folder (build artifacts etc.)
     cleanCommand,
     // Pull in changes for the target envName
-    `git fetch && git checkout -f -B origin/${envName} && git pull origin ${envName}`,
+    `git fetch && git checkout -f remotes/origin/${envName} && git switch -C ${envName} && git restore .`,
     // TODO: what if the remote is not 'origin'?
     // TODO: git pull sometimes wants to do a merge, we need to catch this
     // and simply blow away the local repo if it cannot be fast-forwarded &
