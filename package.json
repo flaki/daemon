@@ -28,7 +28,7 @@
   },
   "homepage": "https://github.com/flaki/daemon#readme",
   "dependencies": {
-    "node-static": "cloudhead/node-static",
+    "@flaki/node-static": "^0.9.99",
     "recursive-copy": "^2.0.13"
   },
   "devDependencies": {

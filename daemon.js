@@ -8,7 +8,7 @@ import { cwd } from 'process'
 import { join as joinPath, resolve as resolvePath } from 'path'
 import copyFiles from 'recursive-copy'
 
-import * as Static from 'node-static'
+import * as Static from '@flaki/node-static'
 
 
 // Debugging helpers
