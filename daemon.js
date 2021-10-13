@@ -84,15 +84,24 @@ if (LOGSDIR) {
   mkdirSync(LOGSDIR, { recursive: true })
 }
 
+// Enables the GitHub component:
 // Designate a repo and environments (branches) to operate on
-const REPO = process.env.REPO
+const GITHUB_REPO = process.env.GITHUB_REPO ?? process.env.REPO // deprecated
+const GITHUB = !!GITHUB_REPO
+if (GITHUB) debug('GitHub repository: ', GITHUB_REPO)
+
 // TODO: move this into a proper helper
 const ENVS = (process.env.ENVS?.split(',') ?? [])
   .map(env => env.split(':'))
   .map(([name,port]) => (name && port ? { name: name.trim(), port: parseInt(port, 10) } : undefined))
   .filter(r => !!r)
 
-debug('Repository: ', REPO)
+
+// Enables the Strapi component:
+const STRAPI = process.env.STRAPI
+if (STRAPI) debug('Strapi webhook processing enabled.')
+
+// Display environments
 debug('Envs: ', ENVS.map(e => `${e.name} (:${e.port})`).join(', ') || '<none>')
 
 
@@ -142,60 +151,93 @@ async function handler(req, res) {
     return console.log('Error processing payload: JSON expected')
   }
 
-  // Store headers in payload for further debugging
-  payload._headers = Object.assign({}, req.headers)
+  // Environment to update
+  let changedEnv
 
-  // Make sure the hook is intended for this handler
-  if (REPO && payload.repository?.full_name !== REPO) {
-    return debug(`Not processed: untracked repository "${payload.repository?.full_name}"`)
+  // GitHub component
+  if (GITHUB) {
+    // Make sure the hook is intended for this handler
+    const repoName = payload.repository?.full_name
+    if (repoName) {
+      if (repoName !== GITHUB_REPO) {
+        debug(`Not processed: untracked repository "${payload.repository?.full_name}"`)
+
+      } else {
+        // Information about the pushed ref/branch
+        const pushedEnv = payload.ref?.split('/').pop()
+        if (!pushedEnv) {
+          debug(`Could not determine pushed env.`)
+
+        } else {
+          debug(`${pusher.name} <${payload.pusher?.email ?? 'Someone'}> pushed new commits to: ${pushedEnv} @ ${repoName}`)
+
+          // Ensure we are supposed to handle this branch/environment
+          changedEnv = ENVS.find(env => env.name == pushedEnv)
+
+          if (!changedEnv) {
+            debug(`Untracked GitHub environment "${pushedEnv}"`)
+          }
+
+          const payloadTime = payload.repository.pushed_at ?? Date.now()
+          const payloadEnv = pushedEnv ?? 'unknown'
+          const payloadHmac = payload._hmac ?? 'unknown'
+      
+          payload._filename = `${payloadTime}-github-${payloadEnv}-${payloadHmac}.json`
+      
+        }
+      }
+    }
   }
 
-  // Extract more information
-  const { ref, pusher, repository: { pushed_at: pushedAt }} = payload
-  const pushedEnv = ref?.split('/').pop()
-  let pushEnv
+  // Strapi component
+  if (STRAPI) {
+    // The header will contain the environment this change is intended for
+    const envName = req.headers['x-daemon-rebuild']
+    
+    if (envName) {
+      const strapiEvent = req.headers['x-strapi-event'] ?? 'none'
+      debug(`Strapi event "${strapiEvent} received for ${envName}`)
 
-  if (pushedEnv) {
-    debug(`${pusher.name} <${pusher.email}> pushed new commits to: ${pushedEnv} @ ${REPO}`)
+      changedEnv = ENVS.find(env => env.name == envName)
 
-    // Ensure we are supposed to handle this branch/environment
-    pushEnv = ENVS.find(env => env.name == pushedEnv)
+      if (!changedEnv) {
+        debug(`Untracked Strapi environment "${envName}"`)
+      }
 
-    if (!pushEnv) {
-      return debug(`Untracked environment "${pushedEnv}"`)
+      payload._filename = `${Date.now()}-strapi-${envName}_${strapiEvent}.json`
     }
-
-  } else {
-    debug(`Could not determine pushed env.`)
   }
 
   // Log the payload JSON for later debugging
   if (LOGSDIR) {
-    const payloadTime = payload.repository.pushed_at ?? Date.now()
-    const payloadEnv = pushedEnv ?? 'unknown'
-    const payloadHmac = payload._hmac ?? 'unknown'
+    let filename = payload._filename
+    if (!filename) {
+      filename = `${Date.now()}-unprocessed.json`
+      debug(`Warning: no component picked up "${filename}"`)
+    }
 
-    const fileName = `${payloadTime}-${payloadEnv}-${payloadHmac}.json`
-
-    writeFileSync(joinPath(LOGSDIR, fileName), JSON.stringify(payload, null, 2))  
+    // Store headers in payload for further debugging
+    payload._headers = Object.assign({}, req.headers)
+    writeFileSync(joinPath(LOGSDIR, filename), JSON.stringify(payload, null, 2))  
   }
 
   // No further processing needed
-  if (!pushEnv) {
-    debug('Not updated.')
+  if (!changedEnv) {
+    debug('No environment was updated.')
     return
   }
 
   // Pull & reload matching repository
-  pushEnv._last = payload
+  changedEnv._last = payload
 
-  await updateEnv(pushEnv.name)
+  await updateEnv(changedEnv.name)
 }
 
 async function receiveWebhook(req, res) {
   
   const { method, url, headers } = req
-  debug(method, url, `(${headers['x-forwarded-for']})`)
+  const ip = headers['x-forwarded-for'] ?? req.socket.remoteAddress ?? 'Unknown IP'
+  debug(method, url, `(${ip})`)
 
   // Payload size
   const contentLen = parseInt(headers['content-length'], 10)
