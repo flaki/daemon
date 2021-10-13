@@ -222,6 +222,13 @@ async function receiveWebhook(req, res) {
   res.writeHead(200, 'OK', { 'Content-Type': 'application/json' })
   res.end(JSON.stringify({ ok: true }))
 
+  // Save last incoming raw webhook headers and content
+  if (LOGSDIR) {
+    const ts = new Date().toUTCString()
+    const metadata = Object.entries(headers).map(e => e.join(': ')).join('\n');
+    writeFileSync(joinPath(LOGSDIR, '_last'), method+' '+ts+'\n'+metadata+'\n\n'+body.toString());
+  }
+
   // Check payload signature and process it
   let sigCheck
   if (HMAC_KEY) {
