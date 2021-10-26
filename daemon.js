@@ -328,7 +328,7 @@ async function setupEnv(env) {
     // Note: this should always be true but it gets us a block scope so why not make it explicit
     if (!env._static) {
       const envPath = resolvePath(WORKDIR, OUTDIR, env.name)
-      const fileServer = new Static.Server(envPath, { defaultExtension: "html" })
+      const fileServer = new Static.Server(envPath, { cache: 60, defaultExtension: "html" })
 
       env._static = (req, res) => fileServer.serve(req, res)
       env._server.on('request', env._static)
