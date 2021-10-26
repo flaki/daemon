@@ -181,9 +181,9 @@ async function handler(req, res) {
           const payloadTime = payload.repository.pushed_at ?? Date.now()
           const payloadEnv = pushedEnv ?? 'unknown'
           const payloadHmac = payload._hmac ?? 'unknown'
-      
+
           payload._filename = `${payloadTime}-github-${payloadEnv}-${payloadHmac}.json`
-      
+
         }
       }
     }
@@ -193,7 +193,7 @@ async function handler(req, res) {
   if (STRAPI) {
     // The header will contain the environment this change is intended for
     const envName = req.headers['x-daemon-rebuild']
-    
+
     if (envName) {
       const strapiEvent = req.headers['x-strapi-event'] ?? 'none'
       debug(`Strapi event "${strapiEvent} received for ${envName}`)
@@ -218,7 +218,7 @@ async function handler(req, res) {
 
     // Store headers in payload for further debugging
     payload._headers = Object.assign({}, req.headers)
-    writeFileSync(joinPath(LOGSDIR, filename), JSON.stringify(payload, null, 2))  
+    writeFileSync(joinPath(LOGSDIR, filename), JSON.stringify(payload, null, 2))
   }
 
   // No further processing needed
@@ -234,7 +234,7 @@ async function handler(req, res) {
 }
 
 async function receiveWebhook(req, res) {
-  
+
   const { method, url, headers } = req
   const ip = headers['x-forwarded-for'] ?? req.socket.remoteAddress ?? 'Unknown IP'
   debug(method, url, `(${ip})`)
@@ -300,7 +300,7 @@ async function receiveWebhook(req, res) {
       debug('JSON parse failed: ', e)
     }
   }
-  
+
   return body
 }
 
@@ -339,7 +339,7 @@ async function setupEnv(env) {
   }
   catch(e) {
     console.error(`Failed to create service for ${env.name}:${env.port}`, e)
-    
+
   }
 }
 
@@ -407,7 +407,7 @@ async function updateEnv(envName = 'preview') {
             console.error(stderr)
             return reject(err)
           }
-        
+
           return resolve({ stdout, stderr })
         })
         // Debugging output from process
@@ -436,7 +436,7 @@ async function updateEnv(envName = 'preview') {
       const { length: copied } = await copyFiles(buildSource, buildTarget)
       debug(`→ ${buildTarget} - ${copied} files copied`)
     }
-    
+
     // Update the service
     await setupEnv(env)
   }
@@ -473,18 +473,18 @@ async function updateEnv(envName = 'preview') {
   for (const e of ENVS) {
     await updateEnv(e.name)
   }
-  
+
   // Launch the daemon to manage the envs
   // TODO: https://www.npmjs.com/package/es-main (matches module filename to argv[])
   if (/* no clue what's the ESM-lingo for this?? => require.main === module */ true) {
     createServer(handler).listen(PORT, (err) => {
       if (err) return console.error(err)
-  
+
       console.log(`Webhook server listening on ${PORT}`)
     })
-  
+
   } else {
     // please run as a server
   }
-  
+
 })().catch(e => console.error(e))
