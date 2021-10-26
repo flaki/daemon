@@ -386,11 +386,23 @@ async function updateEnv(envName = 'preview') {
 
   // On force push we delete the local branch and re-pull from origin
   //let cleanCommand = `git reset --hard && git clean -fxd .`
+  const main = env._last?.repository?.default_branch ?? 'main'
   let cleanCommand = `git clean -fxd . && git restore .`
   if (env._last?.forced) {
-    const main = env._last.repository.default_branch
     cleanCommand = `git checkout ${main} && git branch -D ${envName}`
     debug('Force push detected')
+  }
+  if (process.env.CLEANCMD) {
+    cleanCommand = process.env.CLEANCMD
+      .replace(/%main%/g, main)
+      .replace(/%env%/g, envName)
+  }
+
+  // Branch switch command
+  let branchCommand = `git fetch && git checkout -f remotes/origin/${envName} && git switch -C ${envName} && git restore .`
+  if (process.env.BRANCHCMD) {
+    branchCommand = process.env.BRANCHCMD
+      .replace(/%env%/g, envName)
   }
 
   // Allow embedding env-specific parameters in BUILDCMD
@@ -402,9 +414,9 @@ async function updateEnv(envName = 'preview') {
     // Switch to working dir
     `cd "${WORKDIR}"`,
     // Clean the repo folder (build artifacts etc.)
-    process.env.CLEANCMD || cleanCommand,
+    cleanCommand,
     // Pull in changes for the target envName
-    `git fetch && git checkout -f remotes/origin/${envName} && git switch -C ${envName} && git restore .`,
+    branchCommand, 
     // TODO: what if the remote is not 'origin'?
     // TODO: git pull sometimes wants to do a merge, we need to catch this
     // and simply blow away the local repo if it cannot be fast-forwarded &
