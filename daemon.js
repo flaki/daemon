@@ -409,6 +409,11 @@ async function updateEnv(envName = 'preview') {
         
           return resolve({ stdout, stderr })
         })
+        // Debugging output from process
+        if (process.env.DEBUG) {
+          proc.stdout.pipe(process.stdout);
+          proc.stderr.pipe(process.stderr);
+        }
     })
 
     // Show command output
