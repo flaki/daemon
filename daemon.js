@@ -380,7 +380,7 @@ async function updateEnv(envName = 'preview') {
     // Switch to working dir
     `cd "${WORKDIR}"`,
     // Clean the repo folder (build artifacts etc.)
-    cleanCommand,
+    process.env.CLEANCMD || cleanCommand,
     // Pull in changes for the target envName
     `git fetch && git checkout -f remotes/origin/${envName} && git switch -C ${envName} && git restore .`,
     // TODO: what if the remote is not 'origin'?
