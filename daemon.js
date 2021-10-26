@@ -4,12 +4,15 @@ import { exec } from 'child_process'
 import { createServer } from 'http'
 import { createHmac } from 'crypto'
 import { readFileSync, writeFileSync, mkdirSync, rmSync } from 'fs'
+import { stat } from 'fs/promises'
 import { cwd } from 'process'
 import { join as joinPath, resolve as resolvePath } from 'path'
 import copyFiles from 'recursive-copy'
 
 import Fastify from 'fastify'
 import FastifyStatic from 'fastify-static'
+
+import parseToml from './toml.js';
 
 
 // Debugging helpers
@@ -318,13 +321,38 @@ async function setupEnv(env) {
     const fastify = Fastify({})
     fastify.listen(env.port, '0.0.0.0')
 
-    // Serve static
+    // Serve static files
     const envPath = resolvePath(WORKDIR, OUTDIR, env.name)
     fastify.register(FastifyStatic, {
-      root: envPath
+      root: envPath,
+      extensions: [ 'html' ],
     })
-    // TODO: caching? special file access patterns?
-    //const fileServer = new Static.Server(envPath, { cache: 60, defaultExtension: "html" })
+
+    // Handle redirects
+    const redirects = getRedirects(WORKDIR)
+    for (const r of redirects) {
+      debug(`Redirect ${r.from} → ${r.to} (HTTP/${r.status ?? 301})`)
+      fastify.get(r.from, (request, reply) => reply.redirect(r.status ?? 301, r.to))
+    }
+
+    // Handle directory names without the trailing slash
+    fastify.register(function (instance, options, done) {
+      instance.setNotFoundHandler(async function (request, reply) {
+        // Handle not found request without preValidation and preHandler hooks
+        // to URLs that begin with '/v1'
+        try {
+          const s = await stat(joinPath(envPath, request.url))
+          
+          if (s.isDirectory()) {
+            return reply.redirect(301, request.url+'/')
+          }
+        }
+        catch(e) { /* path not found */ }
+
+        reply.callNotFound()
+      })
+      done()
+    })
 
     debug(`Static files on :${env.port} are now served from: `, envPath)
 
@@ -482,3 +510,15 @@ async function updateEnv(envName = 'preview') {
   }
 
 })().catch(e => console.error(e))
+
+
+// Redirects (from Netlify.toml or similar)
+function getRedirects(project) {
+  try {
+    const tomlString = readFileSync(project+'/netlify.toml').toString()
+    const redirects = parseToml(tomlString).redirects
+    return redirects
+  }
+  catch(e) { /* No toml file or parsing failed or no redirects specified */}
+  return []
+}
