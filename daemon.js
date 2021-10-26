@@ -8,7 +8,8 @@ import { cwd } from 'process'
 import { join as joinPath, resolve as resolvePath } from 'path'
 import copyFiles from 'recursive-copy'
 
-import * as Static from '@flaki/node-static'
+import Fastify from 'fastify'
+import FastifyStatic from 'fastify-static'
 
 
 // Debugging helpers
@@ -306,36 +307,29 @@ async function receiveWebhook(req, res) {
 
 async function setupEnv(env) {
   try {
-    // Server not running
-    if (!env._server) {
-      const server = createServer()
-      server.listen(env.port)
-      env._server = server
-      debug(`Server started for Env "${env.name}" on port ${env.port}`)
-    }
+    // Server already running, we shut it down briefly before we restart it again
+    if (env._server) {
+      env._server.close()
+      env._server = null
 
-    // Server already running, we swap out the static instance with
-    // a newly created one to ensure caches etc. are cleared
-    if (env._static) {
-      // Remove the incoming request event listener from the server
-      env._server.off('request', env._static)
-      // There is no "destroy" on node-static objects so we let the GC do its job
-      env._static = null
       debug(`Old static service removed`)
     }
 
-    // Create a new instance for the static file server and attach it to our service
-    // Note: this should always be true but it gets us a block scope so why not make it explicit
-    if (!env._static) {
-      const envPath = resolvePath(WORKDIR, OUTDIR, env.name)
-      const fileServer = new Static.Server(envPath, { cache: 60, defaultExtension: "html" })
+    const fastify = Fastify({})
+    fastify.listen(env.port, '0.0.0.0')
 
-      env._static = (req, res) => fileServer.serve(req, res)
-      env._server.on('request', env._static)
-      debug(`Static files on :${env.port} are now served from: `, envPath)
-    }
+    // Serve static
+    const envPath = resolvePath(WORKDIR, OUTDIR, env.name)
+    fastify.register(FastifyStatic, {
+      root: envPath
+    })
+    // TODO: caching? special file access patterns?
+    //const fileServer = new Static.Server(envPath, { cache: 60, defaultExtension: "html" })
 
-    console.log(`Service ready: ${env.name}:${env.port}`)
+    debug(`Static files on :${env.port} are now served from: `, envPath)
+
+    env._server = fastify
+    debug(`Server started for Env "${env.name}" on port ${env.port}`)
   }
   catch(e) {
     console.error(`Failed to create service for ${env.name}:${env.port}`, e)
