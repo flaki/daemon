@@ -350,6 +350,13 @@ async function updateEnv(envName = 'preview') {
     return console.error(`Tried to update non-existent env "${envName}"!`, envName)
   }
 
+  if (env.locked) {
+    debug(`Waiting for active build process to finish on: `+envName)
+    env.again = true
+    return
+  }
+
+  env.locked = true
   debug(`Updating: ${envName}`)
 
   // Path to the build target
@@ -429,6 +436,21 @@ async function updateEnv(envName = 'preview') {
   }
   catch(e) {
     console.error(`Failed to update ${env.name}:`, e)
+  }
+
+  // Unlock env
+  env.locked = false
+
+  if (env.again) {
+    env.again = false
+
+    const DEFAULT_TIMEOUT = 10 *1000
+    await new Promise(r => setTimeout(r,DEFAULT_TIMEOUT))
+    // TODO: check if we have been rebuilding too often in the past ~minutes
+    // and throttle the build (lots of edits in the CMS)
+    // TODO: potential issue if hitting recursion limit
+    debug('Resuming delayed build: '+envName)
+    await updateEnv(envName)
   }
 }
 
